@@ -225,7 +225,7 @@ func jsonToChannels(bytes []byte) (Channels, error) {
 func M3u(w http.ResponseWriter, r *http.Request) {
 
 	
-	Print(r.Header.Get("User-Agent"))
+	fmt.Print(r.Header.Get("User-Agent"))
 	req, _ := getJSON(os.Getenv("MEDIA_URL"))
 
 	channels, err := jsonToChannels(req)
