@@ -3,11 +3,12 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
+	"time"
 )
 
 type URL struct {
@@ -83,64 +84,74 @@ func (m3u *M3UData) M3UData() []byte {
 }
 
 type Channel struct {
-	ID                     string        `json:"_id"`
-	Title                  string        `json:"title"`
-	Keywords               []string      `json:"keywords"`
-	Description            interface{}   `json:"description"`
-	MediaType              string        `json:"mediaType"`
-	AdPolicyID             interface{}   `json:"adPolicyId"`
-	Countries              interface{}   `json:"countries"`
-	AllowedCountries       bool          `json:"allowedCountries"`
-	ExcludeCountries       interface{}   `json:"excludeCountries"`
-	Ads                    []interface{} `json:"ads"`
-	ChannelLogoSmartphones struct {
-		DownloadURL  string      `json:"downloadUrl"`
-		DaiAssetID   interface{} `json:"daiAssetId"`
-		StreamingURL string      `json:"streamingUrl"`
-		URL          string      `json:"url"`
-	} `json:"ChannelLogoSmartphones"`
-	HLSBlockedStream struct {
-		DownloadURL  string      `json:"downloadUrl"`
-		DaiAssetID   interface{} `json:"daiAssetId"`
-		StreamingURL string      `json:"streamingUrl"`
-		URL          string      `json:"url"`
-	} `json:"HLSBlockedStream"`
-	ChannelLogoLarge struct {
-		DownloadURL  string      `json:"downloadUrl"`
-		DaiAssetID   interface{} `json:"daiAssetId"`
-		StreamingURL string      `json:"streamingUrl"`
-		URL          string      `json:"url"`
-	} `json:"ChannelLogoLarge"`
-	ChannelLogoSmall struct {
-		DownloadURL  string      `json:"downloadUrl"`
-		DaiAssetID   interface{} `json:"daiAssetId"`
-		StreamingURL string      `json:"streamingUrl"`
-		URL          string      `json:"url"`
-	} `json:"ChannelLogoSmall"`
-	ChannelLogoTablets struct {
-		DownloadURL  string      `json:"downloadUrl"`
-		DaiAssetID   interface{} `json:"daiAssetId"`
-		StreamingURL string      `json:"streamingUrl"`
-		URL          string      `json:"url"`
-	} `json:"ChannelLogoTablets"`
+	//Keywords         string        `json:"keywords"`
+	VodCategory      []interface{} `json:"vod_category"`
+	Categories       []interface{} `json:"categories"`
+	ID               string        `json:"_id"`
+	Title            string        `json:"title"`
+	SeriesID         string        `json:"series_id"`
+	AiredDate        int64         `json:"aired_date"`
+	AllowedCountries interface{}   `json:"allowedCountries"`
+	AdPolicyID       interface{}   `json:"adPolicyId"`
+	Epg              struct {
+		Events []struct {
+			Title  string    `json:"title"`
+			Start  time.Time `json:"start"`
+			End    time.Time `json:"end"`
+			Custom struct {
+				Duration int    `json:"duration"`
+				Rating   string `json:"rating"`
+				Image    struct {
+					Width       string `json:"width"`
+					Height      string `json:"height"`
+					DownloadURL string `json:"downloadUrl"`
+				} `json:"image"`
+			} `json:"custom"`
+		} `json:"events"`
+	} `json:"epg"`
+	Rating    string `json:"rating"`
+	MediaType string `json:"mediaType"`
+	Order     int    `json:"order"`
+	HLSStream struct {
+		DownloadURL  string `json:"downloadUrl"`
+		StreamingURL string `json:"streamingUrl"`
+		URL          string `json:"url"`
+	} `json:"HLSStream"`
+	CommerceType            string   `json:"commerceType,omitempty"`
+	PaidType                string   `json:"paidType,omitempty"`
+	SubscriptionsCategories []string `json:"subscriptionsCategories,omitempty"`
+	PosterH                 struct {
+		DownloadURL string `json:"downloadUrl"`
+	} `json:"PosterH"`
 	AndroidStream struct {
-		DownloadURL  string      `json:"downloadUrl"`
-		DaiAssetID   interface{} `json:"daiAssetId"`
-		StreamingURL string      `json:"streamingUrl"`
-		URL          string      `json:"url"`
+		DownloadURL  string `json:"downloadUrl"`
+		StreamingURL string `json:"streamingUrl"`
+		URL          string `json:"url"`
 	} `json:"AndroidStream"`
 	AndroidBlockedStream struct {
-		DownloadURL  string      `json:"downloadUrl"`
-		DaiAssetID   interface{} `json:"daiAssetId"`
-		StreamingURL string      `json:"streamingUrl"`
-		URL          string      `json:"url"`
+		DownloadURL  string `json:"downloadUrl"`
+		StreamingURL string `json:"streamingUrl"`
+		URL          string `json:"url"`
 	} `json:"AndroidBlockedStream"`
-	HLSStream struct {
-		DownloadURL  string      `json:"downloadUrl"`
-		DaiAssetID   interface{} `json:"daiAssetId"`
-		StreamingURL string      `json:"streamingUrl"`
-		URL          string      `json:"url"`
-	} `json:"HLSStream"`
+	HLSBlockedStream struct {
+		DownloadURL  string `json:"downloadUrl"`
+		StreamingURL string `json:"streamingUrl"`
+		URL          string `json:"url"`
+	} `json:"HLSBlockedStream"`
+	LogoLarge        string `json:"logoLarge"`
+	ChannelLogoLarge struct {
+		DownloadURL  string `json:"downloadUrl"`
+		StreamingURL string `json:"streamingUrl"`
+		URL          string `json:"url"`
+	} `json:"ChannelLogoLarge"`
+	ChannelLogoTablets struct {
+		DownloadURL  string `json:"downloadUrl"`
+		StreamingURL string `json:"streamingUrl"`
+		URL          string `json:"url"`
+	} `json:"ChannelLogoTablets"`
+	PosterF struct {
+		DownloadURL string `json:"downloadUrl"`
+	} `json:"PosterF,omitempty"`
 }
 
 type Channels []Channel
@@ -160,7 +171,7 @@ func (u Channels) StreamList() []response {
 			Title:         channel.Title,
 			ChannelImgURL: channel.ChannelLogoTablets.StreamingURL,
 			HLSStreamURL:  channel.HLSBlockedStream.StreamingURL,
-			Keywords:      channel.Keywords,
+			Keywords:      []string{}, //channel.Keywords,
 		})
 	}
 	return list
@@ -173,7 +184,7 @@ func (u Channels) StreamListToEXTINF(group string) []*EXTINF {
 			Id:      channel.ID,
 			Name:    channel.Title,
 			NewName: channel.Title,
-			Logo:    channel.ChannelLogoSmall.DownloadURL,
+			Logo:    channel.ChannelLogoTablets.DownloadURL,
 			Url:     channel.HLSBlockedStream.StreamingURL,
 			Group:   group,
 			Number:  inx,
@@ -201,7 +212,7 @@ func getJSON(url string) ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Print(err.Error())
 		return nil, err
@@ -232,6 +243,8 @@ func M3u(w http.ResponseWriter, r *http.Request) {
 	//channels
 	if err != nil {
 		fmt.Fprintf(w, "Error")
+		fmt.Println("Error parsing JSON: ", err)
+		return
 	}
 
 	extInfList := channels.StreamListToEXTINF("TVJ")
