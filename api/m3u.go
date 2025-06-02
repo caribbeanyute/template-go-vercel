@@ -170,7 +170,7 @@ func (u Channels) StreamList() []response {
 		list = append(list, response{
 			Title:         channel.Title,
 			ChannelImgURL: channel.ChannelLogoTablets.StreamingURL,
-			HLSStreamURL:  channel.HLSBlockedStream.StreamingURL,
+			HLSStreamURL:  channel.AndroidStream.StreamingURL,
 			Keywords:      []string{}, //channel.Keywords,
 		})
 	}
@@ -185,7 +185,7 @@ func (u Channels) StreamListToEXTINF(group string) []*EXTINF {
 			Name:    channel.Title,
 			NewName: channel.Title,
 			Logo:    channel.ChannelLogoTablets.DownloadURL,
-			Url:     channel.HLSBlockedStream.StreamingURL,
+			Url:     channel.AndroidStream.StreamingURL,
 			Group:   group,
 			Number:  inx,
 			Title:   channel.Title,
